@@ -1,0 +1,21 @@
+{
+  "short_name": "StudioGestor",
+  "name": "StudioGestor Pro",
+  "description": "Sua central de comando profissional para salões e estúdios de beleza.",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FBBF24",
+  "background_color": "#1c1917"
+}
