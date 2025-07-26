@@ -48,11 +48,40 @@ export const AuthProvider = ({ children }) => {
     }
   }, [loadUserProfile]);
 
+  const signOut = useCallback(async () => {
+    // Immediately clear local state to ensure UI updates
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setLoading(false);
+    
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Sign out Failed",
+        description: error.message || "Something went wrong",
+      });
+      // Even if signOut fails, keep the local state cleared
+    }
+
+    return { error };
+  }, [toast]);
+
   useEffect(() => {
     const getSession = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (error) {
         console.error("Erro ao obter sessão:", error.message);
+        
+        // Handle invalid refresh token errors by signing out
+        if (error.message.includes('Invalid Refresh Token') || 
+            error.message.includes('refresh_token_not_found')) {
+          await signOut();
+          return;
+        }
+        
         setLoading(false);
         return;
       }
@@ -68,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     );
 
     return () => subscription.unsubscribe();
-  }, [handleSession]);
+  }, [handleSession, signOut]);
 
   const signUp = useCallback(async (email, password, options) => {
     const { error } = await supabase.auth.signUp({
@@ -98,20 +127,6 @@ export const AuthProvider = ({ children }) => {
       toast({
         variant: "destructive",
         title: "Sign in Failed",
-        description: error.message || "Something went wrong",
-      });
-    }
-
-    return { error };
-  }, [toast]);
-
-  const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Sign out Failed",
         description: error.message || "Something went wrong",
       });
     }
