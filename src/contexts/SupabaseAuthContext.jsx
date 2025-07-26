@@ -142,6 +142,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signOut,
+    refreshProfile: loadUserProfile,
   }), [user, session, profile, loading, signUp, signIn, signOut]);
 
   return (
