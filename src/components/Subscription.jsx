@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, CheckCircle, Star, CreditCard, ShieldCheck, Lock, Users, PartyPopper } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/lib/customSupabaseClient';
 
 const PlanCard = ({ title, description, price, features, buttonText, buttonIcon: ButtonIcon, onClick, popular = false }) => (
   <motion.div
@@ -37,14 +38,42 @@ const PlanCard = ({ title, description, price, features, buttonText, buttonIcon:
 
 export default function Subscription({ setCurrentView, playSound, isBlocked = false, daysLeft, trialEndDate }) {
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { profile, user, refreshProfile } = useAuth();
 
-  const handleSubscribe = (plan) => {
+  const handleSubscribe = async (plan) => {
     playSound();
-    toast({
-      title: "🚧 Em Breve!",
-      description: `A integração com pagamentos para o plano ${plan} estará disponível em breve.`,
-    });
+    
+    // Auto change subscription plan for testing
+    const planMapping = {
+      'Individual': 'individual',
+      'Equipe': 'team'
+    };
+    
+    const subscriptionPlan = planMapping[plan];
+    
+    if (user && subscriptionPlan) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          subscription_plan: subscriptionPlan,
+          trial_ends_at: null // Remove trial end date when subscribing
+        })
+        .eq('id', user.id);
+      
+      if (error) {
+        toast({
+          title: "Erro ao atualizar plano",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        await refreshProfile(user.id);
+        toast({
+          title: "✅ Plano atualizado!",
+          description: `Você agora está no ${plan === 'Individual' ? 'Plano Individual' : 'Plano Equipe'}.`,
+        });
+      }
+    }
   };
 
   const plans = [
